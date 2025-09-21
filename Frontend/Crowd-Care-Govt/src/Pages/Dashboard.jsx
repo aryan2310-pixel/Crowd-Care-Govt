@@ -1,33 +1,4 @@
-import React, { useState } from 'react';
-
-// Dummy data for demonstration
-const initialIssues = [
-  {
-    title: 'Pothole on Elm Street',
-    date: '2024-07-20',
-    status: 'Open',
-  },
-  {
-    title: 'Traffic Light Malfunction at Oak Avenue',
-    date: '2024-07-15',
-    status: 'Pending',
-  },
-  {
-    title: 'Graffiti on Community Center Wall',
-    date: '2024-07-10',
-    status: 'Done',
-  },
-  {
-    title: 'Broken Sidewalk on Maple Drive',
-    date: '2024-07-05',
-    status: 'Open',
-  },
-  {
-    title: 'Noise Complaint in Residential Area',
-    date: '2024-06-30',
-    status: 'Pending',
-  },
-];
+import React, { useEffect, useState } from 'react';
 
 function statusStyles(status) {
   switch (status) {
@@ -43,18 +14,46 @@ function statusStyles(status) {
 }
 
 const Dashboard = () => {
-  const [issues, setIssues] = useState(
-    initialIssues.map((issue) => ({
-      ...issue,
-      status: issue.status || 'Pending',
-    }))
-  );
+  const [issues, setIssues] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const handleStatusChange = (index, newStatus) => {
-    const updatedIssues = [...issues];
-    updatedIssues[index].status = newStatus;
-    setIssues(updatedIssues);
+  // Fetch issues data on mount
+  useEffect(() => {
+    fetch('http://localhost:4000/api/issues')
+      .then((res) => res.json())
+      .then((data) => {
+        // Data may be object with .issues array or direct array
+        setIssues(Array.isArray(data) ? data : data.issues || []);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error('Failed to fetch issues:', err);
+        setLoading(false);
+      });
+  }, []);
+
+  const handleStatusChange = (id, newStatus) => {
+    // Optimistic UI update
+    setIssues((prev) =>
+      prev.map((issue) =>
+        issue._id === id ? { ...issue, status: newStatus } : issue
+      )
+    );
+
+    // Update backend status via PATCH
+    fetch(`http://localhost:4000/api/issues/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: newStatus }),
+    }).catch((err) => {
+      console.error('Failed to update status:', err);
+      // Optionally handle errors by reverting status or notifying user
+    });
   };
+
+  if (loading) {
+    return <div className="p-6 max-w-5xl mx-auto">Loading...</div>;
+  }
 
   return (
     <div className="max-w-5xl mx-auto p-6">
@@ -63,7 +62,6 @@ const Dashboard = () => {
         Track the progress of your reported issues and view detailed information.
       </p>
 
-      {/* Table */}
       <div className="overflow-x-auto bg-white rounded-md border">
         <table className="w-full text-sm text-left">
           <thead>
@@ -75,15 +73,15 @@ const Dashboard = () => {
             </tr>
           </thead>
           <tbody>
-            {issues.map((issue, idx) => (
-              <tr key={idx} className="border-b last:border-none hover:bg-gray-50">
+            {issues.map((issue) => (
+              <tr key={issue._id} className="border-b last:border-none hover:bg-gray-50">
                 <td className="py-3 px-4">{issue.title}</td>
                 <td className="py-3 px-4 text-gray-500">{issue.date}</td>
                 <td className="py-3 px-4">
                   <select
                     className={`rounded-md px-2 py-1 text-xs font-semibold ${statusStyles(issue.status)}`}
                     value={issue.status}
-                    onChange={(e) => handleStatusChange(idx, e.target.value)}
+                    onChange={(e) => handleStatusChange(issue._id, e.target.value)}
                   >
                     <option value="Open">Open</option>
                     <option value="Pending">Pending</option>
