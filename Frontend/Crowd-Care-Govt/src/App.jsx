@@ -1,10 +1,8 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Navbar from './Components/Navbar';
-
-// Placeholder components for your routes
-const Dashboard = () => <div>Dashboard Page</div>;
-const Analytics = () => <div>Analytics Page</div>;
+import Dashboard from './Pages/Dashboard';
+import Analytics from './Pages/Analytics'; // Import Analytics component
 
 const App = () => {
   return (
@@ -12,10 +10,9 @@ const App = () => {
       <Navbar />
       <div className="p-4">
         <Routes>
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/analytics" element={<Analytics />} />
-          {/* Redirect root "/" to "/dashboard" to match nav */}
-          <Route path="/" element={<Dashboard />} />
         </Routes>
       </div>
     </BrowserRouter>
