@@ -1,3 +1,4 @@
+/* global process */
 import React, { useEffect, useState } from 'react';
 
 function statusStyles(status) {
@@ -17,9 +18,11 @@ const Dashboard = () => {
   const [issues, setIssues] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+
   // Fetch issues data on mount
   useEffect(() => {
-    fetch('http://localhost:4000/api/issues')
+    fetch(`${apiUrl}/issues`)
       .then((res) => res.json())
       .then((data) => {
         // Data may be object with .issues array or direct array
@@ -30,7 +33,7 @@ const Dashboard = () => {
         console.error('Failed to fetch issues:', err);
         setLoading(false);
       });
-  }, []);
+  }, [apiUrl]);
 
   const handleStatusChange = (id, newStatus) => {
     // Optimistic UI update
@@ -41,7 +44,7 @@ const Dashboard = () => {
     );
 
     // Update backend status via PATCH
-    fetch(`http://localhost:4000/api/issues/${id}`, {
+    fetch(`${apiUrl}/issues/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: newStatus }),
