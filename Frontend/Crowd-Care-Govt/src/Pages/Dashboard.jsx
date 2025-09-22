@@ -1,4 +1,3 @@
-/* global process */
 import React, { useEffect, useState } from 'react';
 
 function statusStyles(status) {
@@ -18,14 +17,14 @@ const Dashboard = () => {
   const [issues, setIssues] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+  // Use backend link directly
+  // const apiUrl = 'https://crowd-care-r1ub.onrender.com/api';
 
   // Fetch issues data on mount
   useEffect(() => {
-    fetch(`${apiUrl}/issues`)
+    fetch(`https://crowd-care-r1ub.onrender.com/issues`)
       .then((res) => res.json())
       .then((data) => {
-        // Data may be object with .issues array or direct array
         setIssues(Array.isArray(data) ? data : data.issues || []);
         setLoading(false);
       })
@@ -33,7 +32,7 @@ const Dashboard = () => {
         console.error('Failed to fetch issues:', err);
         setLoading(false);
       });
-  }, [apiUrl]);
+  }, []);
 
   const handleStatusChange = (id, newStatus) => {
     // Optimistic UI update
@@ -44,13 +43,12 @@ const Dashboard = () => {
     );
 
     // Update backend status via PATCH
-    fetch(`${apiUrl}/issues/${id}`, {
+    fetch(`https://crowd-care-r1ub.onrender.com/issues/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: newStatus }),
     }).catch((err) => {
       console.error('Failed to update status:', err);
-      // Optionally handle errors by reverting status or notifying user
     });
   };
 
@@ -79,7 +77,13 @@ const Dashboard = () => {
             {issues.map((issue) => (
               <tr key={issue._id} className="border-b last:border-none hover:bg-gray-50">
                 <td className="py-3 px-4">{issue.title}</td>
-                <td className="py-3 px-4 text-gray-500">{issue.date}</td>
+                <td className="py-3 px-4 text-gray-500">
+                  {new Date(issue.createdAt).toLocaleDateString(undefined, {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                  })}
+                </td>
                 <td className="py-3 px-4">
                   <select
                     className={`rounded-md px-2 py-1 text-xs font-semibold ${statusStyles(issue.status)}`}
